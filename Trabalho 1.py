@@ -81,17 +81,19 @@ def modal(j,freq_conv, problemadois = False):
 
     # Guardando os valores de convergência do modelo discreto em relação ao modelo contínuo para os três primeiros modos de Vibração 
     conv = np.zeros(4)
-    analitico = np.zeros(3)
+    analitico = np.zeros(4)
     for i in range(0,3):
-        analitico[i] = (((i+1)*pi/l)* sqrt(gip/rho))
-        conv[i] = freq[i]
+        if(problemadois):
+            conv[i] = freq[i]
+        else:
+            analitico[i] = (((i+1)*pi/l)* sqrt(gip/rho))
+            conv[i] = freq[i]/analitico[i]
 
     # Impressão dos valores numéricos e analíticos (opcional)
     
     print(f"resultado numérico: para {n} graus de liberdade \n")
     for i in range(0,4):
         print(f"omega {i+1} = ", freq[i])
-        conv[i] = freq[i]
 
 
     # Plotando os modos naturais de vibração
@@ -114,12 +116,13 @@ def main():
     # n: quantidade de repetições do refinamento da discretização 
     # Graus de liberdade = 2*(j+2); j = 0,1,2,...,n-1; 
     # para j = 0 => GLs = 4
-    # para j = 7 => GLs = 2^10 = 1024 
+    # para j = 7 => GLs = 2^9 = 512 
     n = 7
     
     freq_conv = np.zeros((n+1,4))
     for i in range(n+1):
-        modal(i,freq_conv,True)
+        # Para adição de inércia pontual, Chamar a função com a flag True
+        modal(i,freq_conv,False)
     abcissas = np.arange(0,n+1) 
     abcissas = [2**(j+2) for j in range(n+1)]
     plt.clf()
