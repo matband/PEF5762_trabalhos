@@ -26,7 +26,7 @@ style=" width:35%;">
 <div>
 <img src="https://github.com/matband/PEF5762_trabalhos/blob/main/Trabalho%201/plots/normalmodes/modes_4_dof.png?raw=true" alt="modes for 4 dof" 
 style=" width:37%;">
-<img src="https://github.com/matband/PEF5762_trabalhos/blob/main/Trabalho%201/plots/normalmodes/modes_1024_dof.png?raw=true" alt="modes for 1024 dof" 
+<img src="https://github.com/matband/PEF5762_trabalhos/blob/main/Trabalho%201/plots/normalmodes/modes_512_dof.png?raw=true" alt="modes for 512 dof" 
 style=" width:37%;">  
 </div>
 <h3>Added mass inertia problem:</h3>
