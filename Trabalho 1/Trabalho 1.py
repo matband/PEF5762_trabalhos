@@ -102,7 +102,7 @@ def modal(j,df,freq_conv,modes, pmConv = 0):
             abcissa = np.arange(0,n+2)
             abcissa = l * abcissa / n 
             for i in range(modes):
-                plt.plot(abcissa,eigvecs.T[i], label = f"mode {i}")
+                plt.plot(abcissa,eigvecs.T[i], label = f"mode {i+1}")
             plt.xlabel("x")
             plt.ylabel(r'$\theta (x)$')
             plt.legend(loc="lower right")
@@ -164,7 +164,7 @@ def modal(j,df,freq_conv,modes, pmConv = 0):
         abcissa = np.arange(0,n+2)
         abcissa = l * abcissa / (n+1) 
         for i in range(modes-nullFreqs):
-            plt.plot(abcissa,eigvecs.T[i], label = f"mode {i}")
+            plt.plot(abcissa,eigvecs.T[i], label = f"mode {i+1}")
 
         plt.legend(loc="lower right")
         plt.xlabel("x")
@@ -207,7 +207,7 @@ def main():
     abcissa = [2**(j+2) for j in range(n+1)]
     plt.clf()
     for i in range(modes):
-        plt.plot(abcissa, freq_conv.T[i], label = f"mode {i}")
+        plt.plot(abcissa, freq_conv.T[i], label = f"mode {i+1}")
     plt.xscale('log',base=2)
     plt.title("Convergence of theoretical and numerical frequencies ratio")
     plt.legend(loc="lower right")
