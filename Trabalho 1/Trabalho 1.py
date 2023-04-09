@@ -1,144 +1,245 @@
 import os
-from math import sqrt
 from scipy import linalg
+from scipy.sparse import diags
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 #######
-# Barra bi engastada de seção circular prismática homogênea
-# Para n graus de liberdade 
-# Sistema massa mola com n+1 molas e n massas
+# Numerical modal analysis 
+# Torsional vibration of a prismatic beam with a circular cross section fixed on both sides
+# Multi degrees of freedom - DOF = n
+# N coupled undamped oscillators
 # Ki = K/n ; i = 0,1,2,...,n
 # Mi = m/n ; i = 0,1,2,...,n-1
-# G*Ip = Módulo de elasticidade transversal * Momento polar de inércia = Módulo de rigidez à torção- Dado
-# rho = Massa linear da barra - Dado
-# l = Comprimento da barra - Dado
+#
+# |----ki----Mi----ki--...--ki----Mi----ki----|
+#
+# 
+# G: shear modulus / Ip: polar moment of inertia
+# rho = linear mass density
+# l = length of the bar
+# G*Ip = torsional stiffness
+# rho*Ip = masspolar moment of inertia per unit length
+# K = tridiagonal matrix
 
-# K = matriz tridiagonal
 
-def modal(j,freq_conv, problemadois = False):
-
+def modal(j,df,freq_conv,modes, pmConv = 0):
+    """
+    Parameters
+    j: iteration of DoF from main function
+    df:  pd dataFrame storing frequencies
+    freq_conv: ratio of frequencies discrete/theoretical for given DoF
+    modes: maximum mode number for the analysis
+    pmConv: Point mass inertia problem convergence -> added mass inertia = 2^i , i=0,...,pmConv
+    """
     n = 2**(j+2) 
     pi = 3.14159265
 
-
-    # Inserir dados 
-    #
-    gip = 200 # G Ip
+    # Data to set: g,rho,l
+    g = 200 
     rho = 0.5
     l = 10
-    
+    #---------------------#
 
-    # Montagem das matrizes
-    # K = g Ip /l 
-    k = gip/l *(n+1)
-    # m = rho * l -> massa discreta
+    
+    # Matrices construction
+    # K = G /l -> Discrete stiffness
+    k = g/l *(n+1)
+    # m = rho * l -> Discrete mass 
     m = (rho*l) / n
     
-    # Matriz diagonal de massas
+    # Mass matrix -> diagonal size (n x n)
     md = m*np.ones(n)
 
-    # Matriz tridiagonal simétrica de rigidez
+    # Tridiagonal Stiffness matrix size (n x n)
 
-    #Elementos da diagonal da matriz tridiagonal simétrica de rigidez K
+    # Main diagonal elements of stiffness matrix
     kd = 2*k*np.ones(n)
-    inerciapontual = gip
-    if(problemadois):
-        kd[int(n/2)] += inerciapontual
-        kd[int(n/2)-1] += inerciapontual
     
-    #Elementos fora da diagonal da matriz tridiagonal simétrica de rigidez K
+    # Subdiagonal elements of stiffness matrix
     ke = -1*k*np.ones(n-1)
-    if(problemadois):
-        
-        kd[int(n/2)] += inerciapontual
-        kd[int(n/2)-1] += inerciapontual
-
-
-    ######
-    # Matriz de rigide de ordem n+1
+    
+       ######
+    # Stiffnes Matrix  size(n x n)
     # [2k -k  0  0 ... 0]
     # [-k 2k -k  0 ... 0]
     # [ 0 -k 2k -k ... 0]
     # [       ...       ]
     # [0  ...  0 0 -k 2k]
-
-
-    # Matriz A da resolução do problema de autovalor clássico
-    # A {phi} = omega^2 {phi} ; A = [M]^-1 * [K]
-    ad = np.divide(kd,md)
-    ae = np.divide(ke,md[1:])
-
-    # Resolução do problema de autovalor clássico para matrizes tridiagonais simétricas pela biblioteca scipy linalg
-    eigvals, eigvecs = linalg.eigh_tridiagonal(ad, ae, eigvals_only=False)
-
-    # Adicionando phi(0) e phi(l) na discretização
-    eigvecs = np.vstack([eigvecs, np.zeros((1,n))])
-    eigvecs = np.vstack([np.zeros((1,n)),eigvecs])
-
-    # frequências naturais = raiz quadrada dos autovalores
-    freq = np.sqrt(eigvals)
-
-    # Guardando os valores de convergência do modelo discreto em relação ao modelo contínuo para os três primeiros modos de Vibração 
-    conv = np.zeros(4)
-    analitico = np.zeros(4)
-    for i in range(0,3):
-        if(problemadois):
-            conv[i] = freq[i]
-        else:
-            analitico[i] = (((i+1)*pi/l)* sqrt(gip/rho))
-            conv[i] = freq[i]/analitico[i]
-
-    # Impressão dos valores numéricos e analíticos (opcional)
     
-    print(f"resultado numérico: para {n} graus de liberdade \n")
-    for i in range(0,4):
-        print(f"omega {i+1} = ", freq[i])
+    # pointMassConvergence:
+    # added mass inertia at l/2 
+    # convergence of frequencies -> mass = 2^i , i=0,1,...,9
 
+    if(pmConv != 0):
+        for ai in range(pmConv):
+            ad = 2**ai
+            coefs = [ke,kd,ke]
+            offset = [-1,0,1]
+            K = diags(coefs,offset).toarray()
+            
+            md[int(n/2)-1] += ad
+            M = np.diag(md)
+            eigvals,eigvecs = linalg.eigh(K,M)
+            eigvecs = np.vstack([eigvecs, np.zeros((1,n))])
+            eigvecs = np.vstack([np.zeros((1,n)),eigvecs])
+            freq = np.sqrt(eigvals)
+            freq_s = list(map(lambda i: f"{i/pi:.2f} pi" if (i==i) else "-" ,list(np.resize(freq,modes))))
 
-    # Plotando os modos naturais de vibração
-    plt.clf()
-    abcissas = np.arange(0,n+2)
-    abcissas = l * abcissas / n 
-    modo = np.ones(n)
-    for i in range(n):
-        modo[i] = np.sin((pi*i)/l)
-    for i in range(3):
-        plt.plot(abcissas,eigvecs.T[i], label = f"modo {i}")
-    plt.legend(loc="best")
-    plt.xlabel("x")
-    plt.ylabel(r'$\theta (x)$')
-    plt.title(f"Modos naturais de vibração para {n} graus de liberdade")
-    plt.savefig(absolute_path+f"/modo_natural_{n}", bbox_inches="tight")
-    freq_conv[j] = conv
+            # print(f'\n Values for added mass inertia of {ad}')
+            # for i in range(modes):
+            #     print(f'mode {i} {ad};',freq[i])
+        
+            if(ai == 0):
+                theo = [f'{4*((mode+1)//2)} pi' for mode in range(modes)]
+                df.loc[0] = ['Theoretical:\n'+r'$mass-> \infty $'] + theo
+
+            df.loc[ai+1] = [str(ad)] + freq_s
+
+            # Plotting normal modes of vibration
+            # plt.clf()
+            abcissa = np.arange(0,n+2)
+            abcissa = l * abcissa / n 
+            for i in range(modes):
+                plt.plot(abcissa,eigvecs.T[i], label = f"mode {i}")
+            plt.xlabel("x")
+            plt.ylabel(r'$\theta (x)$')
+            plt.legend(loc="lower right")
+            plt.title(f"Normal modes: {n} DoF - {ad} added mass inertia")
+            plt.savefig(absolute_path+f"/normalmodes_addedmass/modes_am_{ad}", bbox_inches="tight")
+            plt.clf()
+                    
+            
+    else:
+        # Matrix A of Standard Eigenvalue Problem
+        # A {phi} = omega^2 {phi} ; A = [M]^-1 * [K]
+        ad = np.divide(kd,md)
+        ae = np.divide(ke,md[1:])
+
+        # Solving Standard Eigenvalue Problem for tridiagonal symmetric matrices by scipy linalg lib
+        eigvals, eigvecs = linalg.eigh_tridiagonal(ad, ae, eigvals_only=False)
+
+        # Adding phi(0)=0 e phi(l)=0 
+        eigvecs = np.vstack([eigvecs, np.zeros((1,n))])
+        eigvecs = np.vstack([np.zeros((1,n)),eigvecs])
+
+        # natural frequencies = square root of eigenvalues
+        freq = np.sqrt(eigvals)
+        nullFreqs = modes-freq.size
+        if (nullFreqs < 0 ):
+            nullFreqs = 0
+        for nullValues in range (nullFreqs):
+            freq = np.append(freq,[np.nan])
+        
+        # Storing convergence values:
+        # Discrete/Continuous for given normal modes of vibration 
+        conv = np.zeros(modes)
+        theoretical = np.zeros(modes)
+        for i in range(modes):
+            theoretical[i] = (((i+1)*pi/l)* np.sqrt(g/rho))
+            conv[i] = freq[i]/theoretical[i]
+
+        # Values to string
+        theoretical_s = list(map(lambda i: f"{i/pi:.2f} pi",theoretical))
+        freq_s = list(map(lambda i: f"{i/pi:.2f} pi" if (i==i) else "-" ,list(np.resize(freq,modes))))
+
+        # Setting up dataframe
+        if(j == 0):
+            df.loc[0] = ['Theoretical'] + theoretical_s
+        df.loc[j+1] = [str(n)] + freq_s
+
+        # Print of numerical and theoretical values (optional)
+        # if(j == 0):
+        #     print(f"theoretical values:")
+        #     for i in range(0,modes):
+        #         print(f"omega {i+1} = {theoretical[i]/pi:.3f} * pi")
+        #     print("numerical values:")
+        # print(f"{n} DoF")
+        # for i in range(0,modes):
+        #     print(f"omega {i+1} = {freq[i]/pi:.3f} * pi")
+
+        # Plotting natural modes of torsional vibration
+        plt.clf()
+        abcissa = np.arange(0,n+2)
+        abcissa = l * abcissa / n 
+        for i in range(modes-nullFreqs):
+            plt.plot(abcissa,eigvecs.T[i], label = f"mode {i}")
+
+        plt.legend(loc="lower right")
+        plt.xlabel("x")
+        plt.ylabel(r'$\theta (x)$')
+        plt.title(f"Normal modes of vibration: {n} degrees of freedom")
+        plt.savefig(absolute_path+f"/normalmodes/modes_{n}_dof", bbox_inches="tight")
+        if(j<len(freq_conv)):
+            freq_conv[j] = conv
 
 def main():
-    # n: quantidade de repetições do refinamento da discretização 
-    # Graus de liberdade = 2*(j+2); j = 0,1,2,...,n-1; 
-    # para j = 0 => GLs = 4
-    # para j = 7 => GLs = 2^9 = 512 
-    n = 7
+    # n: DoF refinement
+    # DoF = 2*(j+2); for j = 0,1,2,...,n-1; 
+    # e.g.: 
+    # j = 0 => DoF = 4
+    # j = 7 => DoF = 2^9 = 512 
     
-    freq_conv = np.zeros((n+1,4))
-    for i in range(n+1):
-        # Para adição de inércia pontual, Chamar a função com a flag True
-        modal(i,freq_conv,False)
-    abcissas = np.arange(0,n+1) 
-    abcissas = [2**(j+2) for j in range(n+1)]
-    plt.clf()
-    for i in range(3):
-            plt.plot(abcissas, freq_conv.T[i], label = f"modo {i}")
-    plt.xscale('log',basex=2)
-    plt.title("Convergência da razão entre as soluções numérica e analítica")
-    plt.legend(loc="lower right")
-    plt.xlabel("Graus de liberdade")
-    plt.savefig(absolute_path+"/Convergência", bbox_inches="tight")
+    modes = int(input("Insert maximum mode number for the analysis: \n"))
+    print('Maxima degrees of freedom = 2^(N+2); N<9')
+    n = int(input("Insert N: \n"))
 
+
+    # Setting up the table to export data
+    normalModeCols = ['DoF']
+    for i in range(modes):
+        normalModeCols.append(f'omega {i+1}')
+        
+    df = pd.DataFrame(columns=normalModeCols)
+
+    freq_conv = np.zeros((n+1,modes))
+    for i in range(0,n+1):
+        modal(i,df,freq_conv,modes)
+
+    # Generating Table
+    fig, ax = plt.subplots(1, 1)
+    ax.table(cellText=df.values, colLabels=df.keys(), loc='center')
+    plt.axis('off')
+    plt.savefig(absolute_path+"/freqtable", bbox_inches="tight")
+    # Generating plots
+    abcissa = np.arange(0,n+1) 
+    abcissa = [2**(j+2) for j in range(n+1)]
+    plt.clf()
+    for i in range(modes):
+        plt.plot(abcissa, freq_conv.T[i], label = f"mode {i}")
+    plt.xscale('log',base=2)
+    plt.title("Convergence of theoretical and numerical frequencies ratio")
+    plt.legend(loc="lower right")
+    plt.xlabel("Degrees of Freedom")
+    plt.savefig(absolute_path+"/convergence", bbox_inches="tight")
+    plt.clf()
+    #############
+    # Same problem with point mass inertia at l/2
+    print(f"Point mass inertia at l/2 for {2**(n+2)} DoF")
+    print('Convergence for exponentially progressive values of mass inertia from 2^0 to 2^9')
+    option = int(input("Enter 1 to save the results ; 0 to close \n"))
+    if (option == 1):
+        modal(n,df,freq_conv,modes,10)
+        fig, ax = plt.subplots(1, 1)
+        ytable = ax.table(cellText=df.values, colLabels=df.keys(), loc='center')
+        for r in range(0, len(df.keys())):
+            cell = ytable[1, r]
+            cell.set_height(0.1)
+        plt.axis('off')
+        plt.savefig(absolute_path+"/freqtable_addedmass", bbox_inches="tight")
+    print("Data stored on "+absolute_path)
+    input("Press enter to close...")
 
 ####
-#caminho absoluto para salvar figuras
+#Absolute plots path
 absolute_path = os.path.dirname(__file__) + "/plots"
 if not os.path.exists(absolute_path):
     os.mkdir(absolute_path)
+    if not os.path.exists(absolute_path+'/normalmodes'):
+        os.mkdir(absolute_path+'/normalmodes')
+    if not os.path.exists(absolute_path+'/normalmodes_addedmass'):
+        os.mkdir(absolute_path+'/normalmodes_addedmass')
+
 
 main()
