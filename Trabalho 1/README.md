@@ -1,5 +1,10 @@
 <h1> Trabalho 1 </h1> 
 
+<<<<<<< HEAD
+=======
+<h1> Trabalho 1 </h1> 
+
+>>>>>>> f289f2dd27920b4a970d7a7083e739a75ab359f8
 <h2>Torsional vibration of a prismatic beam with a circular cross section fixed on both sides </h2>
 
 <h3>Numerical Values:</h3> 
@@ -35,4 +40,8 @@ style=" width:37%;">
 style=" width:40%;">
 <img src="https://github.com/matband/PEF5762_trabalhos/blob/main/Trabalho%201/plots/normalmodes_addedmass/modes_am_16.png?raw=true" alt="modes for 512 dof 16 added mass inertia" 
 style=" width:37%;">  
+<<<<<<< HEAD
 </div>
+=======
+</div>
+>>>>>>> f289f2dd27920b4a970d7a7083e739a75ab359f8
