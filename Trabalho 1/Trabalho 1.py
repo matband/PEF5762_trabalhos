@@ -162,7 +162,7 @@ def modal(j,df,freq_conv,modes, pmConv = 0):
         # Plotting natural modes of torsional vibration
         plt.clf()
         abcissa = np.arange(0,n+2)
-        abcissa = l * abcissa / n 
+        abcissa = l * abcissa / (n+1) 
         for i in range(modes-nullFreqs):
             plt.plot(abcissa,eigvecs.T[i], label = f"mode {i}")
 
