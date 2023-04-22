@@ -1,9 +1,7 @@
 import pandas as pd
 from matplotlib import cm
 import matplotlib.pyplot as plt
-import os
 import numpy as np 
-
 
 data = pd.read_csv('config.txt', header = None).to_numpy()
 data = data[:,0]
@@ -19,7 +17,7 @@ Y, Z = np.meshgrid(Y, Z)
 #######################
 
 # Shear Stress
-df2 = pd.read_csv(absolute_path+"/shear.csv", sep='\s+',header=None)
+df2 = pd.read_csv("shear.csv", sep='\s+',header=None)
 df2 = df2.iloc[1:-1,1:-1]
 plt.clf()
 plt.imshow(df2.to_numpy(), cmap ='Spectral_r' ,interpolation='quadric',extent =[0,Ly,0,Lz])
@@ -30,7 +28,7 @@ plt.show()
 
 #####################
 # Warp
-df3 = pd.read_csv(absolute_path+"/warp.csv", sep='\s+',header=None)
+df3 = pd.read_csv("warp.csv", sep='\s+',header=None)
 df3 = df3.iloc[1:-1,1:-1]
 plt.clf()
 plt.imshow(df3.to_numpy(), cmap ='Spectral_r' ,interpolation='quadric',extent =[0,Ly,0,Lz])
@@ -49,7 +47,7 @@ plt.show()
 ######################
 # Prandtl function
 # Colormap
-df3 = pd.read_csv(absolute_path+"/prandtl.csv", sep='\s+',header=None)
+df3 = pd.read_csv("prandtl.csv", sep='\s+',header=None)
 plt.clf()
 plt.imshow(df3.to_numpy(), cmap ='Spectral_r' ,interpolation='quadric',extent =[0,Ly,0,Lz])
 plt.colorbar()
@@ -65,7 +63,7 @@ fig.colorbar(surf, shrink = 0.7, location='left')
 plt.show()
 
 #Convergence
-df = pd.read_csv(absolute_path+"/convergence.csv", sep='\s+')
+df = pd.read_csv("convergence.csv", sep='\s+')
 nyaxis= df.columns.values[1:].tolist()
 nzaxis = df.values[:, 0]
 values = df.values[:, 1:]
