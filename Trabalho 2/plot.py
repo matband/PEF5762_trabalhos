@@ -4,11 +4,6 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np 
 
-#Absolute plots path
-absolute_path = os.path.dirname(__file__) 
-plot_path = absolute_path + "/plots"
-if not os.path.exists(plot_path):
-    os.mkdir(plot_path)
 
 data = pd.read_csv('config.txt', header = None).to_numpy()
 data = data[:,0]
