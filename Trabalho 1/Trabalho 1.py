@@ -220,6 +220,7 @@ def main():
     print('Convergence for exponentially progressive values of mass inertia from 2^0 to 2^9')
     option = int(input("Enter 1 to save the results ; 0 to close \n"))
     if (option == 1):
+        
         modal(n,df,freq_conv,modes,10)
         fig, ax = plt.subplots(1, 1)
         ytable = ax.table(cellText=df.values, colLabels=df.keys(), loc='center')
