@@ -1,6 +1,6 @@
 ## Compile
 
-    git clone --recursive (https://github.com/matband/PEF5762_trabalhos/)
+    git clone --recursive https://github.com/matband/PEF5762_trabalhos/
 
 Go to the folder **Trabalho 2**
 
